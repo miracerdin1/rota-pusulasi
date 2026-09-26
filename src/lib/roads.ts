@@ -115,6 +115,17 @@ const ENDPOINTS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
+// Tarayıcı User-Agent'ı kendisi koyar; Node'da (GitHub Actions) tanımlı bir UA olmadan
+// bazı Overpass sunucuları isteği reddediyor.
+const HEADERS: Record<string, string> =
+  typeof window === "undefined"
+    ? {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent":
+          "rota-pusulasi/1.0 (+https://github.com/miracerdin1/rota-pusulasi)",
+      }
+    : { "Content-Type": "application/x-www-form-urlencoded" };
+
 /**
  * Overpass sunucuları bazen isteği kabul edip dakikalarca bekletiyor. Bu yüzden sunuculara
  * sırayla değil "kademeli yarış" ile gidilir: ilk sunucu `hedgeMs` içinde cevap vermezse
@@ -142,9 +153,7 @@ async function overpassFetch<T>(
               const res = await fetch(ep, {
                 method: "POST",
                 body: "data=" + encodeURIComponent(data),
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
+                headers: HEADERS,
                 signal: ctrls[i].signal,
               });
               const text = await res.text();
