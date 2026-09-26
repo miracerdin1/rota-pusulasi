@@ -1,8 +1,13 @@
 // Hazır yolların (Kuzey Marmara, Avrasya, Osmangazi, 1915 Çanakkale) verisini ve Marmara
-// otoyol ağını önceden indirip public/data/prebuilt.json olarak kaydeder. Site bu dosyayı
+// otoyol ağını indirip public/data/prebuilt.json dosyasını tazeler. Site bu dosyayı
 // kullandığı için telefonda ilk hesaplama Overpass'i beklemez.
-// GitHub Actions'ta derlemeden önce çalışır: npm run prefetch
-import { mkdirSync, writeFileSync } from "node:fs";
+//
+// Dosya repoda da durur: GitHub Actions'tan Overpass'e ulaşılamazsa (sunucular yoğun ya da
+// bulut IP'lerini sınırlıyor) derleme repodaki son sağlam veriyle devam eder. Sadece
+// başarıyla indirilen kalemler güncellenir.
+//
+// Çalıştırma: npm run prefetch
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import {
   PRESET_ROADS,
   fetchAnchors,
@@ -11,49 +16,80 @@ import {
 } from "../src/lib/roads";
 import type { Prebuilt } from "../src/lib/roads";
 
+const FILE = "public/data/prebuilt.json";
 // Tüm hazır yollar kapalıyken oluşan bölgeyi (+20 km) rahatça kapsayan kutu
 const ANCHOR_BOX = { s: 39.9, w: 26.0, n: 41.7, e: 31.3 };
 
+async function retry<T>(
+  label: string,
+  fn: () => Promise<T>,
+  tries = 3,
+): Promise<T> {
+  let last: unknown;
+  for (let i = 1; i <= tries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      last = err;
+      console.warn(`  ${label}: deneme ${i}/${tries} başarısız`);
+      if (i < tries) await new Promise((r) => setTimeout(r, 15000 * i));
+    }
+  }
+  throw last;
+}
+
 async function main() {
+  const old: Prebuilt | null = existsSync(FILE)
+    ? JSON.parse(readFileSync(FILE, "utf8"))
+    : null;
   const out: Prebuilt = {
     generatedAt: Date.now(),
-    roads: {},
-    anchors: { box: ANCHOR_BOX, a: [] },
+    roads: { ...(old?.roads ?? {}) },
+    anchors: old?.anchors ?? { box: { s: 0, w: 0, n: 0, e: 0 }, a: [] },
   };
-  let failures = 0;
+  let kept = 0;
 
   for (const def of PRESET_ROADS) {
     try {
-      const d = processWays(def, await overpass(def.query));
-      if (!d.wayCount) throw new Error("yol bulunamadı");
+      const d = await retry(def.label, async () => {
+        const r = processWays(def, await overpass(def.query));
+        if (!r.wayCount) throw new Error("yol bulunamadı");
+        return r;
+      });
       out.roads[def.id] = { ...d, query: def.query };
       console.log(
         `✓ ${def.label}: ${d.wayCount} parça, ${d.cuts.length} kesim`,
       );
-    } catch (err) {
-      failures++;
-      console.warn(`✗ ${def.label}: ${(err as Error).message ?? err}`);
+    } catch {
+      kept++;
+      console.warn(
+        `• ${def.label}: indirilemedi, ${out.roads[def.id] ? "repodaki veri kullanılıyor" : "site canlı indirecek"}`,
+      );
     }
   }
 
   try {
-    out.anchors.a = await fetchAnchors(ANCHOR_BOX, false);
-    console.log(`✓ Otoyol ağı: ${out.anchors.a.length} ara nokta adayı`);
-  } catch (err) {
-    failures++;
-    console.warn(`✗ Otoyol ağı: ${(err as Error).message ?? err}`);
-    // Kutu boş kalırsa site bu kısım için canlı indirmeye döner
-    out.anchors.box = { s: 0, w: 0, n: 0, e: 0 };
+    const a = await retry("Otoyol ağı", () => fetchAnchors(ANCHOR_BOX, false));
+    if (a.length < 500) throw new Error("beklenenden az veri");
+    out.anchors = { box: ANCHOR_BOX, a };
+    console.log(`✓ Otoyol ağı: ${a.length} ara nokta adayı`);
+  } catch {
+    kept++;
+    console.warn(
+      `• Otoyol ağı: indirilemedi, ${out.anchors.a.length ? "repodaki veri kullanılıyor" : "site canlı indirecek"}`,
+    );
   }
 
   mkdirSync("public/data", { recursive: true });
-  writeFileSync("public/data/prebuilt.json", JSON.stringify(out));
-  console.log(
-    `public/data/prebuilt.json yazıldı${failures ? ` (${failures} kalem eksik, site onları canlı indirir)` : ""}`,
-  );
+  writeFileSync(FILE, JSON.stringify(out));
+  console.log(`${FILE} yazıldı${kept ? ` (${kept} kalem eski veriyle)` : ""}`);
+  if (kept)
+    console.log(
+      "::notice::Yol verisinin bir kısmı indirilemedi; repodaki son sağlam veri kullanıldı.",
+    );
 }
 
-// Overpass'e ulaşılamasa bile derleme durmasın: eksik kalemler sitede canlı indirilir.
+// Overpass'e ulaşılamasa bile derleme durmasın.
 main().catch((err) => {
-  console.warn("Ön hazırlık başarısız, site canlı indirmeye döner:", err);
+  console.warn("Ön hazırlık başarısız, repodaki veri kullanılacak:", err);
 });
