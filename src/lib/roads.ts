@@ -167,7 +167,7 @@ async function overpassFetch<T>(
   }
 }
 
-async function overpass(body: string): Promise<OverpassResult> {
+export async function overpass(body: string): Promise<OverpassResult> {
   // Yolun parçaları + başka yolların bağlandığı düğümler (kavşak noktaları)
   const data =
     `[out:json][timeout:90];(${body})->.k;.k out body geom;` +
@@ -295,8 +295,37 @@ function cacheKey(def: RoadDef) {
   return `rp:road:v${CACHE_VERSION}:${def.id}:${def.query}`;
 }
 
+// ---------- Derleme sırasında hazırlanan veri ----------
+/** GitHub Actions'ta `npm run prefetch` ile üretilen dosya (public/data/prebuilt.json). */
+export interface Prebuilt {
+  generatedAt: number;
+  roads: Record<string, RoadData & { query: string }>;
+  anchors: { box: BBox; a: Anchor[] };
+}
+
+let prebuiltPromise: Promise<Prebuilt | null> | null = null;
+/** Siteyle birlikte gelen hazır veriyi bir kez indirir; yoksa (ör. dosyadan açıldıysa) null. */
+export function loadPrebuilt(): Promise<Prebuilt | null> {
+  prebuiltPromise ??= (async () => {
+    try {
+      const res = await fetch(new URL("data/prebuilt.json", document.baseURI));
+      if (!res.ok) return null;
+      return (await res.json()) as Prebuilt;
+    } catch {
+      return null;
+    }
+  })();
+  return prebuiltPromise;
+}
+
 export async function loadRoad(def: RoadDef, force = false): Promise<RoadData> {
   const key = cacheKey(def);
+  // Hazır yollar için siteyle gelen veri, tarayıcı önbelleğinden de tazedir.
+  if (!force && !def.custom) {
+    const pb = await loadPrebuilt();
+    const d = pb?.roads[def.id];
+    if (d && d.query === def.query && d.wayCount > 0) return d;
+  }
   if (!force) {
     try {
       const raw = localStorage.getItem(key);
@@ -320,10 +349,32 @@ export async function loadRoad(def: RoadDef, force = false): Promise<RoadData> {
 // ---------- Ara nokta adayları (kapalı olmayan otoyollar) ----------
 
 export async function loadAnchors(box: BBox): Promise<Anchor[]> {
+  const pb = await loadPrebuilt();
+  if (pb) {
+    const P = pb.anchors.box;
+    if (box.s >= P.s && box.w >= P.w && box.n <= P.n && box.e <= P.e) {
+      return pb.anchors.a.filter(
+        (x) =>
+          x.p[0] >= box.s &&
+          x.p[0] <= box.n &&
+          x.p[1] >= box.w &&
+          x.p[1] <= box.e,
+      );
+    }
+  }
+  return fetchAnchors(box);
+}
+
+/** Kutu içindeki otoyollardan ara nokta adayları (Overpass'ten, tarayıcı önbellekli). */
+export async function fetchAnchors(
+  box: BBox,
+  useCache = true,
+): Promise<Anchor[]> {
   const r = (x: number) => Math.round(x * 10) / 10;
   const b = `${r(box.s)},${r(box.w)},${r(box.n)},${r(box.e)}`;
   const key = `rp:anchors:v1:${b}`;
   try {
+    if (!useCache) throw 0;
     const raw = localStorage.getItem(key);
     if (raw) {
       const d = JSON.parse(raw) as { at: number; a: Anchor[] };
@@ -348,7 +399,8 @@ export async function loadAnchors(box: BBox): Promise<Anchor[]> {
       dir: [+x.dir[0].toFixed(3), +x.dir[1].toFixed(3)] as [number, number],
     }));
     try {
-      localStorage.setItem(key, JSON.stringify({ at: Date.now(), a }));
+      if (useCache)
+        localStorage.setItem(key, JSON.stringify({ at: Date.now(), a }));
     } catch {
       /* depolama dolu */
     }
