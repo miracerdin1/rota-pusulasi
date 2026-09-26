@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "test": "tsx scripts/test-cuts.ts"
+    "test": "tsx scripts/test-cuts.ts",
+    "prefetch": "tsx scripts/prefetch.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

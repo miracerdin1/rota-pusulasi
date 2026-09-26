@@ -7,6 +7,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Yol verisini haftada bir tazele (Pazartesi 03:17 UTC)
+  schedule:
+    - cron: "17 3 * * 1"
 
 permissions:
   contents: read
@@ -34,6 +37,10 @@ jobs:
 
       - name: Test (gerçek O-7 verisiyle kesim noktaları)
         run: npm test
+
+      - name: Yol verisini önceden hazırla (Overpass → public/data/prebuilt.json)
+        if: github.event_name != 'pull_request'
+        run: npm run prefetch
 
       - name: Derle (tip kontrolü + tek dosya index.html)
         run: npm run build
