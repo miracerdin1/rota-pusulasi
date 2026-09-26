@@ -13,6 +13,7 @@ permissions:
   pages: write
   id-token: write
 
+# Aynı anda tek bir yayın; yenisi gelirse devam eden yayın iptal edilmez, sıraya girer.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -36,6 +37,9 @@ jobs:
 
       - name: Derle (tip kontrolü + tek dosya index.html)
         run: npm run build
+        env:
+          # İsteğe bağlı: repo secret'ı ORS_KEY tanımlıysa anahtar siteye gömülür
+          VITE_ORS_KEY: ${{ secrets.ORS_KEY }}
 
       - uses: actions/configure-pages@v6
         if: github.event_name != 'pull_request'
