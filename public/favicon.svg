@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1b2340"/>
+      <stop offset="0.55" stop-color="#0a0e1c"/>
+      <stop offset="1" stop-color="#020305"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.32" cy="0.26" r="0.55">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="road" x1="250" y1="460" x2="222" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c0d10"/>
+      <stop offset="0.55" stop-color="#33363c"/>
+      <stop offset="1" stop-color="#5b6068"/>
+    </linearGradient>
+    <radialGradient id="pin" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#ffe9c2"/>
+      <stop offset="0.4" stop-color="#ff8a4c"/>
+      <stop offset="1" stop-color="#c81e3a"/>
+    </radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="softGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <filter id="shadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="118" ry="118" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="118" ry="118" fill="url(#sheen)"/>
+
+  <ellipse cx="252" cy="474" rx="88" ry="16" fill="#000000" opacity="0.5" filter="url(#shadow)"/>
+
+  <path d="M 250 460 C 118 428 108 318 218 292 C 348 262 336 150 234 114 C 200 102 196 88 222 66"
+        fill="none" stroke="#aeb4bd" stroke-width="58" stroke-linecap="butt"
+        opacity="0.35" filter="url(#glow)"/>
+
+  <path d="M 250 460 C 118 428 108 318 218 292 C 348 262 336 150 234 114 C 200 102 196 88 222 66"
+        fill="none" stroke="#9aa1ab" stroke-width="54" stroke-linecap="butt" stroke-linejoin="round"/>
+
+  <path d="M 250 460 C 118 428 108 318 218 292 C 348 262 336 150 234 114 C 200 102 196 88 222 66"
+        fill="none" stroke="url(#road)" stroke-width="42" stroke-linecap="butt" stroke-linejoin="round"/>
+
+  <path d="M 250 460 C 118 428 108 318 218 292 C 348 262 336 150 234 114 C 200 102 196 88 222 66"
+        fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="butt" stroke-dasharray="16 16"
+        opacity="0.75"/>
+
+  <path d="M 244 452 C 128 422 122 326 222 300"
+        fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.28" filter="url(#soft)"/>
+  <path d="M 232 280 C 340 252 332 168 244 126"
+        fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.22" filter="url(#soft)"/>
+
+  <circle cx="222" cy="66" r="30" fill="#ff5a5a" opacity="0.55" filter="url(#softGlow)"/>
+  <circle cx="222" cy="66" r="26" fill="url(#pin)" stroke="#00000055" stroke-width="2"/>
+  <ellipse cx="213" cy="58" rx="7" ry="5" fill="#ffffff" opacity="0.9"/>
+</svg>
