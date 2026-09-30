@@ -115,14 +115,14 @@ const ENDPOINTS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
-// Tarayıcı User-Agent'ı kendisi koyar; Node'da (GitHub Actions) tanımlı bir UA olmadan
+// Tarayıcı User-Agent'ı kendisi koyar; Node'da (Netlify derlemesi) tanımlı bir UA olmadan
 // bazı Overpass sunucuları isteği reddediyor.
 const HEADERS: Record<string, string> =
   typeof window === "undefined"
     ? {
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent":
-          "rota-pusulasi/1.0 (+https://github.com/miracerdin1/rota-pusulasi)",
+          "yol-haritasi/1.0 (+https://github.com/miracerdin1/rota-pusulasi)",
       }
     : { "Content-Type": "application/x-www-form-urlencoded" };
 
@@ -305,7 +305,7 @@ function cacheKey(def: RoadDef) {
 }
 
 // ---------- Derleme sırasında hazırlanan veri ----------
-/** GitHub Actions'ta `npm run prefetch` ile üretilen dosya (public/data/prebuilt.json). */
+/** Netlify derlemesinde `npm run prefetch` ile üretilen dosya (public/data/prebuilt.json). */
 export interface Prebuilt {
   generatedAt: number;
   roads: Record<string, RoadData & { query: string }>;

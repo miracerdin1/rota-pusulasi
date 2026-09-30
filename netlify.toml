@@ -1,0 +1,18 @@
+# Netlify, GitHub'a bağlı: main'e her push'ta canlı site, pull request'lerde önizleme derlenir.
+[build]
+  command = "npm test && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Canlı sitede yol verisi de Overpass'ten tazelenir. İndirilemezse repodaki son sağlam
+# veriyle devam eder (derleme durmaz). Önizlemeler Overpass'i yormasın diye bunu atlar.
+[context.production]
+  command = "npm test && npm run prefetch && npm run build"
+
+# Service worker her açılışta yeniden kontrol edilsin ki güncellemeler hemen gelsin.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

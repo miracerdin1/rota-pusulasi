@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Tek bir index.html üretir: GitHub Pages, Netlify Drop ya da herhangi bir yere
+// Tek bir index.html üretir: Netlify ya da herhangi bir yere
 // yüklenip telefondan açılabilir.
 export default defineConfig({
   base: './',
@@ -31,8 +31,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'Rota Pusulası',
-        short_name: 'Pusula',
+        name: 'Yol Haritası',
+        short_name: 'Yol Haritası',
         description: 'Otoyol ve şehir içi rota planlayıcı',
         lang: 'tr',
         start_url: './',
