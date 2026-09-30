@@ -18,6 +18,7 @@ import { fitGoogleStops, planRoute } from "./lib/planner";
 import type { Waypoint } from "./lib/waypoints";
 import { snapToRoute, touchesAvoided } from "./lib/waypoints";
 import { GOOGLE_MAX_WAYPOINTS, googleMapsUrl } from "./lib/google";
+import { yandexMapsUrl, yandexNaviUrl } from "./lib/yandex";
 import { load, save } from "./lib/storage";
 
 // ---------- Ayarlar ----------
@@ -276,6 +277,21 @@ const gmapsUrl = computed(() => {
   );
 });
 
+// Yandex koordinat istiyor; "Konumum" seçiliyse başlangıç boş bırakılır (telefonun konumu)
+const yandexFrom = computed(() =>
+  fromCurrent.value ? null : resolvedFrom.value,
+);
+const ynaviUrl = computed(() =>
+  result.value && resolvedTo.value
+    ? yandexNaviUrl(yandexFrom.value, resolvedTo.value, stopPoints.value)
+    : "",
+);
+const ymapsUrl = computed(() =>
+  result.value && resolvedTo.value
+    ? yandexMapsUrl(yandexFrom.value, resolvedTo.value, stopPoints.value)
+    : "",
+);
+
 async function copyLink() {
   try {
     await navigator.clipboard.writeText(gmapsUrl.value);
@@ -305,10 +321,11 @@ const closedLabels = computed(() =>
   <main class="wrap">
     <header class="sign">
       <div class="codes"><b>O-7</b><b>AVRASYA</b><b>O-5</b></div>
-      <h1>Rota Pusulası</h1>
+      <h1>Yol Haritası</h1>
       <p>
         Pahalı yolları tek tek kapat. Rota onlarsız hesaplanır, sonra Google
-        Maps'te aynı yoldan gitmen için otoyolun üstüne durak konur.
+        Maps ya da Yandex Navigasyon'da aynı yoldan gitmen için otoyolun üstüne
+        durak konur.
       </p>
       <button
         class="gear"
@@ -482,7 +499,7 @@ const closedLabels = computed(() =>
       <p v-if="warning" class="msg warn">{{ warning }}</p>
 
       <div class="stops-head">
-        <span class="lbl">Google Maps durakları</span>
+        <span class="lbl">Navigasyon durakları</span>
         <div class="stepper" role="group" aria-label="En fazla otomatik durak">
           <button
             type="button"
@@ -563,10 +580,17 @@ const closedLabels = computed(() =>
           {{ copied ? "Kopyalandı" : "Linki kopyala" }}
         </button>
       </div>
+      <div class="actions">
+        <a class="btn primary" :href="ynaviUrl">Yandex Navigasyon'da aç ↗</a>
+        <a class="btn ghost" :href="ymapsUrl" target="_blank" rel="noopener"
+          >Yandex Haritalar ↗</a
+        >
+      </div>
       <p class="muted small">
-        Google'da açınca yol tarifinde O-7 ya da kapattığınız yol görünüyorsa "+
-        Durak ekle" ile o bölgedeki önerilen rotanın üstüne bir durak daha
-        koyun.
+        Navigasyonda açınca yol tarifinde O-7 ya da kapattığınız yol görünüyorsa
+        "+ Durak ekle" ile o bölgedeki önerilen rotanın üstüne bir durak daha
+        koyun. Yandex Navigasyon rotayı açmazsa "Yandex Haritalar"dan açıp
+        oradan navigasyona geçin.
       </p>
     </section>
 

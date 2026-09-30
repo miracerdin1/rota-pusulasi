@@ -1,0 +1,29 @@
+# Derleme ve yayını Netlify yapıyor (bkz. netlify.toml). Bu iş akışı sadece yol verisinin
+# haftada bir tazelenmesi için Netlify'da yeni bir canlı derleme başlatır; o derleme
+# npm run prefetch ile Overpass'ten güncel veriyi indirir.
+#
+# Gerekli repo secret'ı: NETLIFY_BUILD_HOOK
+# (Netlify → Project configuration → Build & deploy → Build hooks → Add build hook, dal: main)
+name: Yol verisini tazele
+
+on:
+  # Pazartesi 03:17 UTC
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Netlify'da canlı derlemeyi başlat
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::NETLIFY_BUILD_HOOK secret'ı tanımlı değil."
+            exit 1
+          fi
+          curl -fsS -X POST -d '{}' "$HOOK?trigger_title=Haftal%C4%B1k+yol+verisi"
